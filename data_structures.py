@@ -33,19 +33,19 @@ from yt.utilities.fortran_utils import read_record
 from yt.utilities.logger import ytLogger as mylog
 
 from .definitions import \
-    gadget_header_specs, \
-    gadget_field_specs, \
-    gadget_ptype_specs
+    rebound_header_specs, \
+    rebound_field_specs, \
+    rebound_ptype_specs
 
 from .fields import \
-    GadgetFieldInfo
+    REBOUNDFieldInfo
 
 def _fix_unit_ordering(unit):
     if isinstance(unit[0], string_types):
         unit = unit[1], unit[0]
     return unit
 
-class GadgetBinaryFile(ParticleFile):
+class REBOUNDBinaryFile(ParticleFile):
     def __init__(self, ds, io, filename, file_id):
         with open(filename, "rb") as f:
             self.header = read_record(f, ds._header_spec)
@@ -53,23 +53,23 @@ class GadgetBinaryFile(ParticleFile):
             f.seek(0, os.SEEK_END)
             self._file_size = f.tell()
 
-        super(GadgetBinaryFile, self).__init__(ds, io, filename, file_id)
+        super(REBOUNDBinaryFile, self).__init__(ds, io, filename, file_id)
 
     def _calculate_offsets(self, field_list):
         self.field_offsets = self.io._calculate_field_offsets(
             field_list, self.total_particles,
             self._position_offset, self._file_size)
 
-class GadgetDataset(ParticleDataset):
+class REBOUNDDataset(ParticleDataset):
     _index_class = ParticleIndex
-    _file_class = GadgetBinaryFile
-    _field_info_class = GadgetFieldInfo
+    _file_class = REBOUNDBinaryFile
+    _field_info_class = REBOUNDFieldInfo
     _particle_mass_name = "Mass"
     _particle_coordinates_name = "Coordinates"
     _particle_velocity_name = "Velocities"
     _suffix = ""
 
-    def __init__(self, filename, dataset_type="gadget_binary",
+    def __init__(self, filename, dataset_type="rebound_binary",
                  additional_fields=(),
                  unit_base=None, n_ref=64,
                  over_refine_factor=1,
@@ -82,11 +82,11 @@ class GadgetDataset(ParticleDataset):
                  unit_system="cgs"):
         if self._instantiated: return
         self._header_spec = self._setup_binary_spec(
-            header_spec, gadget_header_specs)
+            header_spec, rebound_header_specs)
         self._field_spec = self._setup_binary_spec(
-            field_spec, gadget_field_specs)
+            field_spec, rebound_field_specs)
         self._ptype_spec = self._setup_binary_spec(
-            ptype_spec, gadget_ptype_specs)
+            ptype_spec, rebound_ptype_specs)
         self.n_ref = n_ref
         self.over_refine_factor = over_refine_factor
         self.index_ptype = index_ptype
@@ -107,7 +107,7 @@ class GadgetDataset(ParticleDataset):
         if units_override is not None:
             raise RuntimeError("units_override is not supported for GadgetDataset. "+
                                "Use unit_base instead.")
-        super(GadgetDataset, self).__init__(filename, dataset_type, unit_system=unit_system)
+        super(REBOUNDDataset, self).__init__(filename, dataset_type, unit_system=unit_system)
         if self.cosmological_simulation:
             self.time_unit.convert_to_units('s/h')
             self.length_unit.convert_to_units('kpccm/h')
@@ -160,10 +160,10 @@ class GadgetDataset(ParticleDataset):
 
         self.cosmological_simulation = 1
 
-        self.current_redshift = hvals["Redshift"]
-        self.omega_lambda = hvals["OmegaLambda"]
-        self.omega_matter = hvals["Omega0"]
-        self.hubble_constant = hvals["HubbleParam"]
+        self.current_redshift = 0
+        self.omega_lambda = 0
+        # self.omega_matter = hvals["Omega0"]
+        # self.hubble_constant = hvals["HubbleParam"]
         # According to the Gadget manual, OmegaLambda will be zero for
         # non-cosmological datasets.  However, it may be the case that
         # individuals are running cosmological simulations *without* Lambda, in
@@ -332,15 +332,15 @@ class GadgetDataset(ParticleDataset):
     @classmethod
     def _is_valid(self, *args, **kwargs):
         # First 4 bytes used to check load
-        return GadgetDataset._validate_header(args[0])[0]
+        return REBOUNDDataset._validate_header(args[0])[0]
 
-class GadgetHDF5Dataset(GadgetDataset):
+class REBOUNDHDF5Dataset(REBOUNDDataset):
     _file_class = ParticleFile
-    _field_info_class = GadgetFieldInfo
+    _field_info_class = REBOUNDFieldInfo
     _particle_mass_name = "Masses"
     _suffix = ".hdf5"
 
-    def __init__(self, filename, dataset_type="gadget_hdf5",
+    def __init__(self, filename, dataset_type="rebound_hdf5",
                  unit_base = None, n_ref=64,
                  over_refine_factor=1,
                  index_ptype="all",
@@ -350,9 +350,9 @@ class GadgetHDF5Dataset(GadgetDataset):
         self.storage_filename = None
         filename = os.path.abspath(filename)
         if units_override is not None:
-            raise RuntimeError("units_override is not supported for GadgetHDF5Dataset. "+
+            raise RuntimeError("units_override is not supported for REBOUNDHDF5Dataset. "+
                                "Use unit_base instead.")
-        super(GadgetHDF5Dataset, self).__init__(
+        super(REBOUNDHDF5Dataset, self).__init__(
             filename, dataset_type, unit_base=unit_base, n_ref=n_ref,
             over_refine_factor=over_refine_factor, index_ptype=index_ptype,
             bounding_box = bounding_box, unit_system=unit_system)
@@ -360,7 +360,7 @@ class GadgetHDF5Dataset(GadgetDataset):
     def _get_hvals(self):
         handle = h5py.File(self.parameter_filename, mode="r")
         hvals = {}
-        hvals.update((str(k), v) for k, v in handle["/Header"].attrs.items())
+        hvals.update((str(k), v) for k, v in handle["/REBOUND"].attrs.items())
         # Compat reasons.
         hvals["NumFiles"] = hvals["NumFilesPerSnapshot"]
         hvals["Massarr"] = hvals["MassTable"]
@@ -425,8 +425,8 @@ class GadgetHDF5Dataset(GadgetDataset):
 
     @classmethod
     def _is_valid(self, *args, **kwargs):
-        need_groups = ['Header']
-        veto_groups = ['FOF', 'Group', 'Subhalo']
+        need_groups = ['REBOUND']
+        veto_groups = ['Header', 'Group', 'Subhalo']
         valid = True
         try:
             fh = h5py.File(args[0], mode='r')

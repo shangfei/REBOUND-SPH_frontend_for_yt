@@ -1,5 +1,5 @@
 """
-API for Gadget frontend
+API for REBOUND frontend
 
 
 
@@ -15,15 +15,15 @@ API for Gadget frontend
 #-----------------------------------------------------------------------------
 
 from .data_structures import \
-    GadgetDataset, \
-    GadgetHDF5Dataset, \
-    GadgetFieldInfo
+    REBOUNDDataset, \
+    REBOUNDHDF5Dataset, \
+    REBOUNDFieldInfo
 
 from .io import \
-    IOHandlerGadgetBinary, \
-    IOHandlerGadgetHDF5
+    IOHandlerREBOUNDBinary, \
+    IOHandlerREBOUNDHDF5
 
 from .simulation_handling import \
-    GadgetSimulation
+    REBOUNDSimulation
 
-from . import tests
+# from . import tests

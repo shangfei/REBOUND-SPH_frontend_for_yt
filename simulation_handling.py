@@ -1,5 +1,5 @@
 """
-GadgetSimulation class and member functions.
+REBOUNDSimulation class and member functions.
 
 
 
@@ -41,7 +41,7 @@ from yt.utilities.logger import ytLogger as \
 from yt.utilities.parallel_tools.parallel_analysis_interface import \
     parallel_objects
 
-class GadgetSimulation(SimulationTimeSeries):
+class REBOUNDSimulation(SimulationTimeSeries):
     r"""
     Initialize an Gadget Simulation object.
 
