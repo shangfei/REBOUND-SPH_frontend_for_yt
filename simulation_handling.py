@@ -41,7 +41,7 @@ from yt.utilities.logger import ytLogger as \
 from yt.utilities.parallel_tools.parallel_analysis_interface import \
     parallel_objects
 
-class REBOUNDSimulation(SimulationTimeSeries):
+class ReboundSimulation(SimulationTimeSeries):
     r"""
     Initialize an Gadget Simulation object.
 
@@ -329,7 +329,7 @@ class REBOUNDSimulation(SimulationTimeSeries):
             self.parameters[param] = vals
 
         # Domain dimensions for Gadget datasets are always 2x2x2 for octree
-        self.domain_dimensions = np.array([2,2,2])
+        self.domain_dimensions = np.array([2,2,2]) # Not sure why gadget uses 2x2x2, but seems in rebound's case it should be 1x1x1?
 
         if self.parameters["ComovingIntegrationOn"]:
             cosmo_attr = {"box_size": "BoxSize",

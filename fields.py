@@ -18,7 +18,7 @@ from yt.frontends.sph.fields import SPHFieldInfo
 from yt.fields.particle_fields import add_volume_weighted_smoothed_field
 from yt.utilities.physical_constants import mp, kb
 
-class REBOUNDFieldInfo(SPHFieldInfo):
+class ReboundFieldInfo(SPHFieldInfo):
 
     def setup_particle_fields(self, ptype, *args, **kwargs):
 
@@ -27,7 +27,7 @@ class REBOUNDFieldInfo(SPHFieldInfo):
         if (ptype, "FourMetalFractions") in self.ds.field_list:
             self._setup_four_metal_fractions(ptype)
 
-        super(REBOUNDFieldInfo, self).setup_particle_fields(
+        super(ReboundFieldInfo, self).setup_particle_fields(
             ptype, *args, **kwargs)
 
         if ptype in ("PartType0", "Gas"):

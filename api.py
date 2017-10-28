@@ -15,15 +15,15 @@ API for REBOUND frontend
 #-----------------------------------------------------------------------------
 
 from .data_structures import \
-    REBOUNDDataset, \
-    REBOUNDHDF5Dataset, \
-    REBOUNDFieldInfo
+    ReboundDataset, \
+    ReboundHDF5Dataset, \
+    ReboundFieldInfo
 
 from .io import \
-    IOHandlerREBOUNDBinary, \
-    IOHandlerREBOUNDHDF5
+    IOHandlerReboundBinary, \
+    IOHandlerReboundHDF5
 
 from .simulation_handling import \
-    REBOUNDSimulation
+    ReboundSimulation
 
 # from . import tests

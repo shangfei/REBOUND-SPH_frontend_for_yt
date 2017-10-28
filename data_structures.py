@@ -38,14 +38,14 @@ from .definitions import \
     rebound_ptype_specs
 
 from .fields import \
-    REBOUNDFieldInfo
+    ReboundFieldInfo
 
 def _fix_unit_ordering(unit):
     if isinstance(unit[0], string_types):
         unit = unit[1], unit[0]
     return unit
 
-class REBOUNDBinaryFile(ParticleFile):
+class ReboundBinaryFile(ParticleFile):
     def __init__(self, ds, io, filename, file_id):
         with open(filename, "rb") as f:
             self.header = read_record(f, ds._header_spec)
@@ -53,17 +53,17 @@ class REBOUNDBinaryFile(ParticleFile):
             f.seek(0, os.SEEK_END)
             self._file_size = f.tell()
 
-        super(REBOUNDBinaryFile, self).__init__(ds, io, filename, file_id)
+        super(ReboundBinaryFile, self).__init__(ds, io, filename, file_id)
 
     def _calculate_offsets(self, field_list):
         self.field_offsets = self.io._calculate_field_offsets(
             field_list, self.total_particles,
             self._position_offset, self._file_size)
 
-class REBOUNDDataset(ParticleDataset):
+class ReboundDataset(ParticleDataset):
     _index_class = ParticleIndex
-    _file_class = REBOUNDBinaryFile
-    _field_info_class = REBOUNDFieldInfo
+    _file_class = ReboundBinaryFile
+    _field_info_class = ReboundFieldInfo
     _particle_mass_name = "Mass"
     _particle_coordinates_name = "Coordinates"
     _particle_velocity_name = "Velocities"
@@ -107,15 +107,15 @@ class REBOUNDDataset(ParticleDataset):
         if units_override is not None:
             raise RuntimeError("units_override is not supported for GadgetDataset. "+
                                "Use unit_base instead.")
-        super(REBOUNDDataset, self).__init__(filename, dataset_type, unit_system=unit_system)
+        super(ReboundDataset, self).__init__(filename, dataset_type, unit_system=unit_system)
         if self.cosmological_simulation:
             self.time_unit.convert_to_units('s/h')
             self.length_unit.convert_to_units('kpccm/h')
             self.mass_unit.convert_to_units('g/h')
         else:
             self.time_unit.convert_to_units('s')
-            self.length_unit.convert_to_units('kpc')
-            self.mass_unit.convert_to_units('Msun')
+            self.length_unit.convert_to_units('cm')
+            self.mass_unit.convert_to_units('g')
 
     def _setup_binary_spec(self, spec, spec_dict):
         if isinstance(spec, str):
@@ -158,7 +158,7 @@ class REBOUNDDataset(ParticleDataset):
         self.domain_dimensions = np.ones(3, "int32") * nz
         self.periodicity = (True, True, True)
 
-        self.cosmological_simulation = 1
+        self.cosmological_simulation = 0
 
         self.current_redshift = 0
         self.omega_lambda = 0
@@ -207,8 +207,8 @@ class REBOUNDDataset(ParticleDataset):
                 only_on_root(mylog.info, "Assuming length units are in kpc/h (comoving)")
                 self._unit_base = dict(length = (1.0, "kpccm/h"))
             else:
-                only_on_root(mylog.info, "Assuming length units are in kpc (physical)")
-                self._unit_base = dict(length = (1.0, "kpc"))
+                only_on_root(mylog.info, "Assuming length units are in cm (physical)")
+                self._unit_base = dict(length = (1.0, "cm"))
 
         # If units passed in by user, decide what to do about
         # co-moving and factors of h
@@ -240,7 +240,7 @@ class REBOUNDDataset(ParticleDataset):
         elif "UnitVelocity_in_cm_per_s" in unit_base:
             velocity_unit = (unit_base["UnitVelocity_in_cm_per_s"], vel_units)
         else:
-            velocity_unit = (1e5, vel_units)
+            velocity_unit = (1e0, vel_units)
         velocity_unit = _fix_unit_ordering(velocity_unit)
         self.velocity_unit = self.quan(velocity_unit[0], velocity_unit[1])
 
@@ -255,7 +255,7 @@ class REBOUNDDataset(ParticleDataset):
                 mass_unit = (unit_base["UnitMass_in_g"], "g/h")
         else:
             # Sane default
-            mass_unit = (1e10, "Msun/h")
+            mass_unit = (1e0, "g")
         mass_unit = _fix_unit_ordering(mass_unit)
         self.mass_unit = self.quan(mass_unit[0], mass_unit[1])
         if self.cosmological_simulation:
@@ -332,11 +332,11 @@ class REBOUNDDataset(ParticleDataset):
     @classmethod
     def _is_valid(self, *args, **kwargs):
         # First 4 bytes used to check load
-        return REBOUNDDataset._validate_header(args[0])[0]
+        return ReboundDataset._validate_header(args[0])[0]
 
-class REBOUNDHDF5Dataset(REBOUNDDataset):
+class ReboundHDF5Dataset(ReboundDataset):
     _file_class = ParticleFile
-    _field_info_class = REBOUNDFieldInfo
+    _field_info_class = ReboundFieldInfo
     _particle_mass_name = "Masses"
     _suffix = ".hdf5"
 
@@ -350,9 +350,9 @@ class REBOUNDHDF5Dataset(REBOUNDDataset):
         self.storage_filename = None
         filename = os.path.abspath(filename)
         if units_override is not None:
-            raise RuntimeError("units_override is not supported for REBOUNDHDF5Dataset. "+
+            raise RuntimeError("units_override is not supported for ReboundHDF5Dataset. "+
                                "Use unit_base instead.")
-        super(REBOUNDHDF5Dataset, self).__init__(
+        super(ReboundHDF5Dataset, self).__init__(
             filename, dataset_type, unit_base=unit_base, n_ref=n_ref,
             over_refine_factor=over_refine_factor, index_ptype=index_ptype,
             bounding_box = bounding_box, unit_system=unit_system)
@@ -360,7 +360,7 @@ class REBOUNDHDF5Dataset(REBOUNDDataset):
     def _get_hvals(self):
         handle = h5py.File(self.parameter_filename, mode="r")
         hvals = {}
-        hvals.update((str(k), v) for k, v in handle["/REBOUND"].attrs.items())
+        hvals.update((str(k), v) for k, v in handle["/Header"].attrs.items())
         # Compat reasons.
         hvals["NumFiles"] = hvals["NumFilesPerSnapshot"]
         hvals["Massarr"] = hvals["MassTable"]
@@ -425,14 +425,15 @@ class REBOUNDHDF5Dataset(REBOUNDDataset):
 
     @classmethod
     def _is_valid(self, *args, **kwargs):
-        need_groups = ['REBOUND']
-        veto_groups = ['Header', 'Group', 'Subhalo']
+        need_groups = ['Header','FOF']
+        veto_groups = ['Group', 'Subhalo']
         valid = True
         try:
             fh = h5py.File(args[0], mode='r')
             valid = all(ng in fh["/"] for ng in need_groups) and \
               not any(vg in fh["/"] for vg in veto_groups)
             fh.close()
+            print(valid)
         except:
             valid = False
             pass

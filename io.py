@@ -27,12 +27,12 @@ from yt.utilities.lib.geometry_utils import \
     compute_morton
 from yt.utilities.logger import ytLogger as mylog
 
-class IOHandlerREBOUNDHDF5(IOHandlerOWLS):
+class IOHandlerReboundHDF5(IOHandlerOWLS):
     _dataset_type = "rebound_hdf5"
 
 ZeroMass = object()
     
-class IOHandlerREBOUNDBinary(BaseIOHandler):
+class IOHandlerReboundBinary(BaseIOHandler):
     _dataset_type = "rebound_binary"
     _vector_fields = (("Coordinates", 3),
                       ("Velocity", 3),
@@ -61,7 +61,7 @@ class IOHandlerREBOUNDBinary(BaseIOHandler):
         self._vector_fields = dict(self._vector_fields)
         self._fields = ds._field_spec
         self._ptypes = ds._ptype_spec
-        super(IOHandlerREBOUNDBinary, self).__init__(ds, *args, **kwargs)
+        super(IOHandlerReboundBinary, self).__init__(ds, *args, **kwargs)
 
     @property
     def var_mass(self):
