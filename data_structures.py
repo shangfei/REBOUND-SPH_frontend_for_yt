@@ -152,8 +152,8 @@ class ReboundDataset(ParticleDataset):
 
         # We may have an overridden bounding box.
         if self.domain_left_edge is None:
-            self.domain_left_edge = np.zeros(3, "float64")
-            self.domain_right_edge = np.ones(3, "float64") * hvals["BoxSize"]
+            self.domain_left_edge = -np.ones(3, "float64") * hvals["BoxSize"]/2.
+            self.domain_right_edge = np.ones(3, "float64") * hvals["BoxSize"]/2.
         nz = 1 << self.over_refine_factor
         self.domain_dimensions = np.ones(3, "int32") * nz
         self.periodicity = (True, True, True)
@@ -425,7 +425,7 @@ class ReboundHDF5Dataset(ReboundDataset):
 
     @classmethod
     def _is_valid(self, *args, **kwargs):
-        need_groups = ['Header','FOF']
+        need_groups = ['Header','FOF','REBOUND']
         veto_groups = ['Group', 'Subhalo']
         valid = True
         try:
@@ -433,7 +433,6 @@ class ReboundHDF5Dataset(ReboundDataset):
             valid = all(ng in fh["/"] for ng in need_groups) and \
               not any(vg in fh["/"] for vg in veto_groups)
             fh.close()
-            print(valid)
         except:
             valid = False
             pass

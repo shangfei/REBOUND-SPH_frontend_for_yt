@@ -19,7 +19,7 @@ import numpy as np
 import os
 
 from yt.extern.six import string_types
-from yt.frontends.owls.io import \
+from .io_owls import \
     IOHandlerOWLS
 from yt.utilities.io_handler import \
     BaseIOHandler
